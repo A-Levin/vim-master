@@ -32,29 +32,30 @@ vim-master/
 - **Python**: 3.11+
 - **База данных**: PostgreSQL 15+ для основных данных
 - **Кеширование**: Redis 7+ для сессий и быстрого доступа
-- **Менеджер зависимостей**: Poetry
+- **Менеджер зависимостей**: uv (быстрый менеджер пакетов на Rust)
 - **Контейнеризация**: Docker + Docker Compose
 
 ## Команды для разработки
 ```bash
 # Установка зависимостей
-poetry install
+uv sync
 
 # Запуск в режиме разработки
-poetry run python app/main.py
+uv run python app/main.py
 
 # Тестирование
-poetry run pytest
+uv run pytest
 
 # Форматирование кода
-poetry run black app/
-poetry run isort app/
+uv run black app/
+uv run isort app/
+uv run ruff check app/ --fix
 
 # Проверка типов
-poetry run mypy app/
+uv run mypy app/
 
 # Миграции базы данных
-poetry run alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ## MVP функциональность

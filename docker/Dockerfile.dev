@@ -8,21 +8,19 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка Poetry
-RUN pip install poetry==1.8.3
+# Установка uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Настройка Poetry
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VENV_IN_PROJECT=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Настройка uv
+ENV UV_SYSTEM_PYTHON=1
 
 WORKDIR /app
 
-# Копирование файлов Poetry
-COPY pyproject.toml poetry.lock* ./
+# Копирование файлов проекта
+COPY pyproject.toml uv.lock* ./
 
 # Установка зависимостей
-RUN poetry install --with dev,test && rm -rf $POETRY_CACHE_DIR
+RUN uv sync --frozen
 
 # Копирование исходного кода
 COPY . .
@@ -41,4 +39,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Команда по умолчанию для разработки
-CMD ["poetry", "run", "python", "app/main.py"]
+CMD ["uv", "run", "python", "app/main.py"]
