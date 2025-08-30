@@ -1,0 +1,44 @@
+FROM python:3.11-slim
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка Poetry
+RUN pip install poetry==1.8.3
+
+# Настройка Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VENV_IN_PROJECT=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+WORKDIR /app
+
+# Копирование файлов Poetry
+COPY pyproject.toml poetry.lock* ./
+
+# Установка зависимостей
+RUN poetry install --with dev,test && rm -rf $POETRY_CACHE_DIR
+
+# Копирование исходного кода
+COPY . .
+
+# Создание пользователя для безопасности
+RUN adduser --disabled-password --gecos '' appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Переменные окружения для разработки
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Expose порт для API
+EXPOSE 8000
+
+# Команда по умолчанию для разработки
+CMD ["poetry", "run", "python", "app/main.py"]
