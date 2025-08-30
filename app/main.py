@@ -3,17 +3,18 @@
 import asyncio
 import logging
 import sys
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from fastapi import FastAPI
 
+from app.api.main import api_router
+from app.bot.handlers import menu, quest, start
+from app.config.database import close_database, init_database
 from app.config.settings import settings
-from app.config.database import init_database, close_database
-from app.bot.handlers import start, menu
 
 # Configure logging
 logging.basicConfig(
@@ -37,7 +38,7 @@ def get_bot() -> Bot:
     if bot is None:
         if not settings.telegram_bot_token:
             raise ValueError("TELEGRAM_BOT_TOKEN is not set!")
-        
+
         bot = Bot(
             token=settings.telegram_bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
@@ -50,7 +51,8 @@ def setup_bot() -> None:
     # Register routers
     dp.include_router(start.router)
     dp.include_router(menu.router)
-    
+    dp.include_router(quest.router)
+
     logger.info("Bot handlers registered successfully")
 
 
@@ -59,13 +61,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """FastAPI lifespan context manager."""
     # Startup
     logger.info("Starting VimMaster application...")
-    
+
     # Initialize database
     await init_database()
-    
+
     # Setup bot
     setup_bot()
-    
+
     # Start bot polling in background
     if settings.telegram_bot_token:
         bot_task = asyncio.create_task(start_bot_polling())
@@ -73,12 +75,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     else:
         logger.warning("No Telegram bot token provided, bot will not start")
         bot_task = None
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down VimMaster application...")
-    
+
     # Stop bot
     if bot_task and not bot_task.done():
         bot_task.cancel()
@@ -87,10 +89,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except asyncio.CancelledError:
             pass
         logger.info("Bot polling stopped")
-    
+
     # Close database connections
     await close_database()
-    
+
     # Close bot session
     current_bot = get_bot()
     await current_bot.session.close()
@@ -100,7 +102,9 @@ async def start_bot_polling() -> None:
     """Start bot polling."""
     try:
         current_bot = get_bot()
-        await dp.start_polling(current_bot, allowed_updates=dp.resolve_used_update_types())
+        await dp.start_polling(
+            current_bot, allowed_updates=dp.resolve_used_update_types()
+        )
     except Exception as e:
         logger.error(f"Bot polling failed: {e}")
         raise
@@ -113,6 +117,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Include API routes
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -141,19 +148,21 @@ async def main() -> None:
     if not settings.telegram_bot_token:
         logger.error("TELEGRAM_BOT_TOKEN is not set!")
         sys.exit(1)
-    
+
     logger.info("Starting VimMaster bot...")
-    
+
     # Initialize database
     await init_database()
-    
+
     # Setup bot
     setup_bot()
-    
+
     try:
         # Start polling
         current_bot = get_bot()
-        await dp.start_polling(current_bot, allowed_updates=dp.resolve_used_update_types())
+        await dp.start_polling(
+            current_bot, allowed_updates=dp.resolve_used_update_types()
+        )
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
     except Exception as e:

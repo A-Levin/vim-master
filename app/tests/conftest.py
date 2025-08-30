@@ -1,12 +1,12 @@
 """Pytest configuration and fixtures for VimMaster tests."""
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from aiogram import Bot
-from aiogram.types import User, Chat, Message
+from aiogram.types import Chat, Message, User
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -14,6 +14,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.config.database import Base
 from app.config.settings import Settings
+
 # Import app only when needed to avoid bot initialization issues
 
 
@@ -41,10 +42,10 @@ async def test_engine():
         connect_args={"check_same_thread": False},
         echo=False,
     )
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
     await engine.dispose()
 
@@ -110,6 +111,7 @@ def test_client() -> Generator[TestClient, None, None]:
     """Test client for FastAPI."""
     # Import here to avoid initialization issues
     from app.main import app
+
     with TestClient(app) as client:
         yield client
 
@@ -119,6 +121,7 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """Async test client for FastAPI."""
     # Import here to avoid initialization issues
     from app.main import app
+
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         yield client
 
@@ -148,6 +151,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest.fixture
 def make_message():
     """Factory for creating test messages."""
+
     def _make_message(
         text: str = "/start",
         user_id: int = 12345,
@@ -169,26 +173,28 @@ def make_message():
             date=1234567890,
             text=text,
         )
+
     return _make_message
 
 
 @pytest.fixture
 def make_callback_query():
     """Factory for creating test callback queries."""
+
     def _make_callback_query(
         data: str = "test",
         user_id: int = 12345,
         username: str = "testuser",
     ):
-        from aiogram.types import CallbackQuery, InlineQuery
-        
+        from aiogram.types import CallbackQuery
+
         user = User(
             id=user_id,
             is_bot=False,
             first_name="Test",
             username=username,
         )
-        
+
         # Create a mock message for the callback
         message = Message(
             message_id=1,
@@ -197,7 +203,7 @@ def make_callback_query():
             date=1234567890,
             text="Test message",
         )
-        
+
         return CallbackQuery(
             id="test_callback",
             from_user=user,
@@ -205,4 +211,5 @@ def make_callback_query():
             data=data,
             message=message,
         )
+
     return _make_callback_query

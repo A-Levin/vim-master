@@ -3,15 +3,14 @@
 import logging
 from typing import Any
 
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram import F, Router
+from aiogram.types import CallbackQuery, Message
 
 from app.bot.keyboards.main import (
-    get_main_keyboard,
-    get_quest_keyboard,
+    get_back_to_main_keyboard,
     get_learning_keyboard,
     get_profile_keyboard,
-    get_back_to_main_keyboard,
+    get_quest_keyboard,
 )
 
 logger = logging.getLogger(__name__)

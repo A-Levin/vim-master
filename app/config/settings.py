@@ -1,8 +1,5 @@
 """Application settings and configuration."""
 
-import os
-from typing import List, Optional
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,10 +29,10 @@ class Settings(BaseSettings):
     telegram_bot_token: str = Field(
         default="", description="Telegram bot token from @BotFather"
     )
-    telegram_webhook_url: Optional[str] = Field(
+    telegram_webhook_url: str | None = Field(
         default=None, description="Webhook URL for Telegram bot"
     )
-    telegram_webhook_secret_token: Optional[str] = Field(
+    telegram_webhook_secret_token: str | None = Field(
         default=None, description="Secret token for webhook validation"
     )
 
@@ -64,7 +61,7 @@ class Settings(BaseSettings):
     api_reload: bool = Field(default=False, description="Enable API auto-reload")
 
     # CORS
-    allowed_origins: List[str] = Field(
+    allowed_origins: list[str] = Field(
         default=[
             "http://localhost:3000",
             "https://your-frontend-domain.com",
@@ -77,9 +74,7 @@ class Settings(BaseSettings):
     log_format: str = Field(default="json", description="Log format (json/text)")
 
     # Game Configuration
-    max_hints_per_quest: int = Field(
-        default=3, description="Maximum hints per quest"
-    )
+    max_hints_per_quest: int = Field(default=3, description="Maximum hints per quest")
     default_quest_time_limit: int = Field(
         default=300, description="Default quest time limit in seconds"
     )
@@ -91,22 +86,18 @@ class Settings(BaseSettings):
     )
 
     # Telegram Mini App
-    mini_app_url: Optional[str] = Field(
-        default=None, description="Telegram Mini App URL"
-    )
-    mini_app_secret: Optional[str] = Field(
+    mini_app_url: str | None = Field(default=None, description="Telegram Mini App URL")
+    mini_app_secret: str | None = Field(
         default=None, description="Mini App secret for validation"
     )
 
     # Monitoring
-    sentry_dsn: Optional[str] = Field(
+    sentry_dsn: str | None = Field(
         default=None, description="Sentry DSN for error monitoring"
     )
 
     # Testing
-    test_database_url: Optional[str] = Field(
-        default=None, description="Test database URL"
-    )
+    test_database_url: str | None = Field(default=None, description="Test database URL")
 
     @property
     def is_development(self) -> bool:
@@ -127,3 +118,8 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Get settings instance."""
+    return settings

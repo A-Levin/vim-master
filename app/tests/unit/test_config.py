@@ -1,10 +1,13 @@
-"""Tests for configuration module."""
+"""Unit tests for configuration module."""
 
 import os
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from app.config.settings import Settings
+
+pytestmark = pytest.mark.unit
 
 
 class TestSettings:
@@ -13,7 +16,7 @@ class TestSettings:
     def test_default_settings(self):
         """Test default settings values."""
         settings = Settings()
-        
+
         assert settings.debug is False
         assert settings.secret_key == "your-super-secret-key-change-this-in-production"
         assert settings.algorithm == "HS256"
@@ -24,15 +27,18 @@ class TestSettings:
 
     def test_settings_from_env(self):
         """Test settings loaded from environment variables."""
-        with patch.dict(os.environ, {
-            "DEBUG": "true",
-            "SECRET_KEY": "test-secret",
-            "TELEGRAM_BOT_TOKEN": "123456:test_token",
-            "DATABASE_URL": "postgresql://test:test@localhost/test",
-            "LOG_LEVEL": "DEBUG",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "DEBUG": "true",
+                "SECRET_KEY": "test-secret",
+                "TELEGRAM_BOT_TOKEN": "123456:test_token",
+                "DATABASE_URL": "postgresql://test:test@localhost/test",
+                "LOG_LEVEL": "DEBUG",
+            },
+        ):
             settings = Settings()
-            
+
             assert settings.debug is True
             assert settings.secret_key == "test-secret"
             assert settings.telegram_bot_token == "123456:test_token"
@@ -43,7 +49,7 @@ class TestSettings:
         """Test is_development property."""
         settings = Settings(debug=True)
         assert settings.is_development is True
-        
+
         settings = Settings(debug=False)
         assert settings.is_development is False
 
@@ -51,7 +57,7 @@ class TestSettings:
         """Test is_production property."""
         settings = Settings(debug=True)
         assert settings.is_production is False
-        
+
         settings = Settings(debug=False)
         assert settings.is_production is True
 
@@ -64,25 +70,33 @@ class TestSettings:
         """Test get_database_url for test environment."""
         settings = Settings(
             database_url="postgresql://main:pass@localhost/main",
-            test_database_url="postgresql://test:pass@localhost/test"
+            test_database_url="postgresql://test:pass@localhost/test",
         )
-        
-        assert settings.get_database_url(test=False) == "postgresql://main:pass@localhost/main"
-        assert settings.get_database_url(test=True) == "postgresql://test:pass@localhost/test"
+
+        assert (
+            settings.get_database_url(test=False)
+            == "postgresql://main:pass@localhost/main"
+        )
+        assert (
+            settings.get_database_url(test=True)
+            == "postgresql://test:pass@localhost/test"
+        )
 
     def test_get_database_url_test_fallback(self):
         """Test get_database_url fallback when test_database_url is None."""
         settings = Settings(
-            database_url="postgresql://main:pass@localhost/main",
-            test_database_url=None
+            database_url="postgresql://main:pass@localhost/main", test_database_url=None
         )
-        
-        assert settings.get_database_url(test=True) == "postgresql://main:pass@localhost/main"
+
+        assert (
+            settings.get_database_url(test=True)
+            == "postgresql://main:pass@localhost/main"
+        )
 
     def test_game_configuration_defaults(self):
         """Test game configuration defaults."""
         settings = Settings()
-        
+
         assert settings.max_hints_per_quest == 3
         assert settings.default_quest_time_limit == 300
         assert settings.streak_reset_hours == 48
@@ -91,7 +105,7 @@ class TestSettings:
     def test_optional_fields_defaults(self):
         """Test optional fields have correct defaults."""
         settings = Settings()
-        
+
         assert settings.telegram_webhook_url is None
         assert settings.mini_app_url is None
         assert settings.sentry_dsn is None

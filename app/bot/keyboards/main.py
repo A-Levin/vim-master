@@ -1,6 +1,11 @@
 """Main keyboards for VimMaster bot."""
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -58,25 +63,17 @@ def get_learning_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(
                     text="📖 Основы Vim", callback_data="learn_basics"
                 ),
-                InlineKeyboardButton(
-                    text="⌨️ Команды", callback_data="learn_commands"
-                ),
+                InlineKeyboardButton(text="⌨️ Команды", callback_data="learn_commands"),
             ],
             [
-                InlineKeyboardButton(
-                    text="🎯 Движения", callback_data="learn_motions"
-                ),
+                InlineKeyboardButton(text="🎯 Движения", callback_data="learn_motions"),
                 InlineKeyboardButton(
                     text="✏️ Редактирование", callback_data="learn_editing"
                 ),
             ],
             [
-                InlineKeyboardButton(
-                    text="🔍 Поиск", callback_data="learn_search"
-                ),
-                InlineKeyboardButton(
-                    text="🎭 Макросы", callback_data="learn_macros"
-                ),
+                InlineKeyboardButton(text="🔍 Поиск", callback_data="learn_search"),
+                InlineKeyboardButton(text="🎭 Макросы", callback_data="learn_macros"),
             ],
             [
                 InlineKeyboardButton(
@@ -103,9 +100,7 @@ def get_profile_keyboard() -> InlineKeyboardMarkup:
                 ),
             ],
             [
-                InlineKeyboardButton(
-                    text="⚙️ Настройки", callback_data="settings"
-                ),
+                InlineKeyboardButton(text="⚙️ Настройки", callback_data="settings"),
             ],
             [
                 InlineKeyboardButton(

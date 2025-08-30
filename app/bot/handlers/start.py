@@ -8,6 +8,9 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from app.bot.keyboards.main import get_main_keyboard
+from app.core.services.game import game_service
+from app.core.services.user import user_service
+from app.db.base import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +21,32 @@ router = Router()
 async def start_handler(message: Message, **kwargs: Any) -> None:
     """
     Handle /start command.
-    
+
     This handler is called when user first starts the bot or sends /start.
     It shows welcome message and main menu.
     """
-    user = message.from_user
-    if not user:
+    telegram_user = message.from_user
+    if not telegram_user:
         return
 
-    logger.info(f"User {user.id} ({user.username}) started the bot")
+    logger.info(f"User {telegram_user.id} ({telegram_user.username}) started the bot")
 
-    welcome_text = f"""🎮 <b>Добро пожаловать в VimMaster!</b>
+    # Create or get user from database
+    db = SessionLocal()
+    try:
+        user = user_service.get_or_create_user(
+            db,
+            telegram_id=telegram_user.id,
+            username=telegram_user.username,
+            first_name=telegram_user.first_name,
+            last_name=telegram_user.last_name,
+        )
 
-Привет, {html.bold(user.first_name)}! 👋
+        welcome_text = f"""🎮 <b>Добро пожаловать в VimMaster!</b>
 
-VimMaster — это интерактивная игра для изучения Vim через практические квесты. 
+Привет, {html.bold(telegram_user.first_name)}! 👋
+
+VimMaster — это интерактивная игра для изучения Vim через практические квесты.
 
 <b>Что тебя ждет:</b>
 • 📚 Изучение команд Vim от базовых до продвинутых
@@ -40,15 +54,20 @@ VimMaster — это интерактивная игра для изучения
 • 🏆 Система очков и достижений
 • 📈 Отслеживание прогресса
 
+<b>Твой текущий уровень:</b> {user_service.calculate_level(user.total_score)}
+<b>Очки:</b> {user.total_score}
+
 <b>Начни свое путешествие в мир Vim прямо сейчас!</b>
 
 Выбери действие в меню ниже:"""
 
-    await message.answer(
-        welcome_text,
-        reply_markup=get_main_keyboard(),
-        parse_mode="HTML",
-    )
+        await message.answer(
+            welcome_text,
+            reply_markup=get_main_keyboard(),
+            parse_mode="HTML",
+        )
+    finally:
+        db.close()
 
 
 @router.message(Command("help"))
@@ -81,26 +100,41 @@ async def help_handler(message: Message) -> None:
 @router.message(Command("profile"))
 async def profile_handler(message: Message) -> None:
     """Handle /profile command."""
-    user = message.from_user
-    if not user:
+    telegram_user = message.from_user
+    if not telegram_user:
         return
 
-    # TODO: Get user data from database
-    profile_text = f"""👤 <b>Профиль игрока</b>
+    db = SessionLocal()
+    try:
+        user = user_service.get_user_by_telegram_id(db, telegram_user.id)
+        if not user:
+            await message.answer(
+                "Пользователь не найден. Используйте /start для регистрации."
+            )
+            return
 
-<b>Имя:</b> {html.bold(user.first_name or "Не указано")}
-<b>Username:</b> @{user.username or "не установлен"}
-<b>ID:</b> <code>{user.id}</code>
+        # Get user progress summary
+        progress_summary = game_service.get_user_progress_summary(db, user.id)
+        current_level = user_service.calculate_level(user.total_score)
+
+        profile_text = f"""👤 <b>Профиль игрока</b>
+
+<b>Имя:</b> {html.bold(telegram_user.first_name or "Не указано")}
+<b>Username:</b> @{telegram_user.username or "не установлен"}
+<b>ID:</b> <code>{telegram_user.id}</code>
 
 📊 <b>Статистика:</b>
-• Уровень: 1
-• Очки: 0
-• Квестов завершено: 0
-• Дней подряд: 0
+• Уровень: {current_level}
+• Очки: {user.total_score}
+• Квестов завершено: {progress_summary['total_completed']}
+• Попыток всего: {progress_summary['total_attempts']}
+• Процент успеха: {progress_summary['completion_rate'] * 100:.1f}%
 
 🏆 <b>Достижения:</b>
-Пока нет достижений
+{"Пока нет достижений" if progress_summary['total_completed'] == 0 else f"Завершено квестов: {progress_summary['total_completed']}"}
 
-<i>Начните проходить квесты, чтобы улучшить статистику!</i>"""
+<i>Продолжайте проходить квесты, чтобы улучшить статистику!</i>"""
 
-    await message.answer(profile_text, parse_mode="HTML")
+        await message.answer(profile_text, parse_mode="HTML")
+    finally:
+        db.close()
