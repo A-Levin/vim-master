@@ -97,6 +97,40 @@ async def help_handler(message: Message) -> None:
     await message.answer(help_text, parse_mode="HTML")
 
 
+@router.message(Command("donate"))
+async def donate_handler(message: Message) -> None:
+    """Handle /donate command."""
+    donate_text = """💰 <b>Поддержить VimMaster</b>
+
+Спасибо, что хотите поддержать проект! ❤️
+
+<b>🤖 Удобные способы в Telegram:</b>
+• 💎 <b>Telegram Stars</b> — Встроенная система (скоро!)
+• 🎁 <b>Подарки</b> — Отправьте стикер-подарок
+
+<b>🔐 Криптовалюты:</b>
+• ₿ <b>Bitcoin:</b> <code>bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code>
+• Ξ <b>Ethereum:</b> <code>0x742d35Cc6634C0532925a3b8D58A37F39534BB26</code>
+• ₮ <b>USDT (TRC20):</b> <code>TGhP4M8GGhjkXYZ...</code>
+• 💎 <b>TON:</b> <code>UQD4FPq-w0yog...</code>
+
+<b>🌍 Другие способы:</b>
+• ❤️ GitHub Sponsors
+• ☕ Buy Me a Coffee  
+• 🥝 Qiwi, YooMoney
+
+<i>Все донаты идут на развитие проекта и серверные ресурсы</i>
+
+<b>Не можете поддержать финансово?</b>
+• ⭐ Поставьте звезду на GitHub
+• 📢 Расскажите друзьям о VimMaster
+• 📝 Оставьте отзыв или предложение
+
+Спасибо за поддержку! 🚀"""
+
+    await message.answer(donate_text, parse_mode="HTML")
+
+
 @router.message(Command("profile"))
 async def profile_handler(message: Message) -> None:
     """Handle /profile command."""

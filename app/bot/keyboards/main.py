@@ -22,6 +22,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
             ],
             [
                 KeyboardButton(text="ℹ️ Помощь"),
+                KeyboardButton(text="💰 Поддержать"),
             ],
         ],
         resize_keyboard=True,
